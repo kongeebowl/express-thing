@@ -1,6 +1,12 @@
 import type { Request, Response } from "express";
 const User = require("../models/userModel");
 
+export type User = {
+  name: string;
+  email: string;
+  password: string;
+};
+
 async function index(req: Request, res: Response) {
   const users = await User.find();
   res.send(users);

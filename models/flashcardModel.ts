@@ -4,7 +4,10 @@ const { Schema } = mongoose;
 const schemaDefinition = {
   question: { type: String, required: true },
   answer: { type: String, required: true },
-  status: { type: String, required: true, enum: ["new", "learning", "good"] },
+  image: { type: String, required: true },
+  group: { type: String, required: true },
+  owner: { type: User, required: true },
+  // status: { type: String, required: true, enum: ["new", "learning", "good"] },
 };
 
 const flashcardSchema = new Schema(schemaDefinition, {
@@ -20,4 +23,4 @@ const flashcardSchema = new Schema(schemaDefinition, {
 
 const Flashcard = mongoose.model("Flashcard", flashcardSchema);
 
-module.exports = Flashcard;
+export { Flashcard };
