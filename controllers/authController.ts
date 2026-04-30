@@ -1,58 +1,60 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-const User = require("../models/user");
+const User = require("../models/userModel");
 
-async function signUp(req: Request, res: Response) {
-  const { name, email, password } = req.body;
-
-  if (await User.findOne({ email }))
-    return res.status(409).json({ error: "USER_ALREADY_EXISTS" });
-
+async function register(req: Request, res: Response) {
   try {
-    const newUser = await User.create({
-      name,
-      email,
-      password,
-    });
-    await newUser.save();
+    const { name, email, password } = req.body;
 
-    return res.sendStatus(200);
-  } catch {
-    return res.status(500).json({ error: "SIGN_UP_FAILED" });
+    if (!name || !email || !password) {
+      res.status(400).json({ error: "Name, email, and password are required" });
+      return;
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(409).json({ error: "Email already in use" });
+      return;
+    }
+
+    const user = new User({ name, email, password });
+    await user.save();
+
+    res.status(201).json({ message: "User registered successfully", user });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Registration failed" });
   }
 }
 
-async function signIn(req: Request, res: Response) {
-  const { email, password } = req.body;
-  const existingUser = await User.findOne({ email });
+async function login(req: Request, res: Response) {
+  try {
+    const { email, password } = req.body;
 
-  if (!existingUser)
-    return res.status(401).json({ error: "INVALID_CREDENTIALS" });
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
+    }
 
-  if (!(await bcrypt.compare(password, existingUser.password)))
-    return res.status(401).json({ error: "INVALID_CREDENTIALS" });
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
 
-  const payload = {
-    id: existingUser.id,
-    email: existingUser.email,
-    role: existingUser.role,
-  };
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
 
-  const userJWT = jwt.sign(payload, process.env.JWT_KEY!, { expiresIn: "6h" });
-
-  res.status(200).send({
-    ...existingUser.toJSON(),
-    token: userJWT,
-  });
-}
-
-async function logout(req: Request, res: Response) {
-  res.sendStatus(204);
+    res.json({ message: "Login successful", user });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Login failed" });
+  }
 }
 
 module.exports = {
-  signUp,
-  signIn,
-  logout,
+  register,
+  login,
 };
