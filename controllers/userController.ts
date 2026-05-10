@@ -7,7 +7,6 @@ export type User = {
   password: string;
 };
 
-// Get all users
 async function index(req: Request, res: Response) {
   try {
     const users = await User.find();
@@ -17,7 +16,6 @@ async function index(req: Request, res: Response) {
   }
 }
 
-// Get user by ID
 async function show(req: Request, res: Response) {
   try {
     const user = await User.findById(req.params.id);
@@ -28,7 +26,6 @@ async function show(req: Request, res: Response) {
   }
 }
 
-// Create user
 async function store(req: Request, res: Response) {
   try {
     const { name, email, password } = req.body;
@@ -53,7 +50,6 @@ async function store(req: Request, res: Response) {
   }
 }
 
-// Update user
 async function update(req: Request, res: Response) {
   try {
     const { name, email, password } = req.body;
@@ -83,7 +79,6 @@ async function update(req: Request, res: Response) {
   }
 }
 
-// Delete user
 async function destroy(req: Request, res: Response) {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
