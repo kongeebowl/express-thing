@@ -18,15 +18,15 @@ const flashcardSchema = new Schema(
       required: true,
       trim: true,
     },
-    difficulty: {
-      type: String,
-      enum: ["easy", "medium", "hard"],
-      default: "medium",
-    },
-    isReviewed: {
-      type: Boolean,
-      default: false,
-    },
+    // difficulty: {
+    //   type: String,
+    //   enum: ["easy", "medium", "hard"],
+    //   default: "medium",
+    // },
+    // isReviewed: {
+    //   type: Boolean,
+    //   default: false,
+    // },
   },
   {
     timestamps: true,

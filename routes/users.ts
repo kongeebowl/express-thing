@@ -1,12 +1,16 @@
-import { Router } from "express";
-import { index, show, update, destroy } from "../controllers/userController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
+const express = require("express");
+const router = new express.Router();
+const userController = require("../controllers/userController");
+const auth = require("../middleware/auth");
+const upload = require("../middleware/upload");
+router.post("/register", userController.register);
+router.post("/login", userController.login);
+router.get("/profile", auth, userController.getProfile);
+router.post(
+  "/profile/photo",
+  auth,
+  upload.single("photo"),
+  userController.uploadProfilePicture,
+);
 
-const router = Router();
-
-router.get("/", index);
-router.get("/:id", show);
-router.put("/:id", authMiddleware, update);
-router.delete("/:id", authMiddleware, destroy);
-
-export default router;
+module.exports = router;
