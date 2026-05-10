@@ -1,7 +1,11 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-const User = require("../models/userModel");
+import User from "../models/userModel.js";
+
+const isValidEmail = (email: string): boolean => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
 
 async function register(req: Request, res: Response) {
   try {
@@ -9,6 +13,16 @@ async function register(req: Request, res: Response) {
 
     if (!name || !email || !password) {
       res.status(400).json({ error: "Name, email, and password are required" });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({ error: "Invalid email format" });
+      return;
+    }
+
+    if (password.length < 6) {
+      res.status(400).json({ error: "Password must be at least 6 characters" });
       return;
     }
 
@@ -48,13 +62,20 @@ async function login(req: Request, res: Response) {
       return;
     }
 
-    res.json({ message: "Login successful", user });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({ error: "Server configuration error" });
+      return;
+    }
+
+    const token = jwt.sign({ userId: user._id, email: user.email }, secret, {
+      expiresIn: "7d",
+    });
+
+    res.json({ message: "Login successful", token, user });
   } catch (error: any) {
     res.status(500).json({ error: error.message || "Login failed" });
   }
 }
 
-module.exports = {
-  register,
-  login,
-};
+export { register, login };

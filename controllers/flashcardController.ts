@@ -1,17 +1,25 @@
 import type { Request, Response } from "express";
+import { Types } from "mongoose";
 import { Flashcard } from "../models/flashcardModel.js";
-import type { SortOrder } from "mongoose";
 import User from "../models/userModel.js";
+import {
+  getPaginationOptions,
+  createPaginatedResponse,
+} from "../utils/pagination.js";
+import { validateFlashcard } from "../utils/validators.js";
 
-export type Flashcard = {
-  question: string;
-  answer: string;
-  group: string;
-};
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
-async function index(req: Request, res: Response) {
+async function index(req: AuthRequest, res: Response) {
   try {
-    const { userId } = req.params;
+    const userId = req.userId;
+
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
 
     const user = await User.findById(userId);
     if (!user) {
@@ -19,8 +27,24 @@ async function index(req: Request, res: Response) {
       return;
     }
 
-    const flashcards = await Flashcard.find({ userId });
-    res.json(flashcards);
+    const { page, limit } = getPaginationOptions(req.query);
+    const skip = (page - 1) * limit;
+
+    const [flashcards, total] = await Promise.all([
+      Flashcard.find({ userId })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
+      Flashcard.countDocuments({ userId }),
+    ]);
+
+    const paginatedResponse = createPaginatedResponse(
+      flashcards,
+      total,
+      page,
+      limit,
+    );
+    res.json(paginatedResponse);
   } catch (error: any) {
     res
       .status(500)
@@ -28,11 +52,17 @@ async function index(req: Request, res: Response) {
   }
 }
 
-async function show(req: Request, res: Response) {
+async function show(req: AuthRequest, res: Response) {
   try {
-    const { userId, cardId } = req.params;
+    const userId = req.userId;
+    const { cardId } = req.params;
 
-    const flashcard = await Flashcard.findById(cardId);
+    if (!cardId || !Types.ObjectId.isValid(cardId)) {
+      res.status(400).json({ error: "Invalid card ID" });
+      return;
+    }
+
+    const flashcard = await Flashcard.findById(cardId as string);
     if (!flashcard) {
       res.status(404).json({ error: "FLASHCARD_NOT_FOUND" });
       return;
@@ -51,13 +81,19 @@ async function show(req: Request, res: Response) {
   }
 }
 
-async function store(req: Request, res: Response) {
+async function store(req: AuthRequest, res: Response) {
   try {
-    const { userId } = req.params;
+    const userId = req.userId;
     const { question, answer, difficulty } = req.body;
 
-    if (!question || !answer) {
-      res.status(400).json({ error: "Question and answer are required" });
+    const validation = validateFlashcard(question, answer);
+    if (!validation.isValid) {
+      res.status(400).json({ errors: validation.errors });
+      return;
+    }
+
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ error: "Invalid user ID" });
       return;
     }
 
@@ -86,12 +122,18 @@ async function store(req: Request, res: Response) {
   }
 }
 
-async function update(req: Request, res: Response) {
+async function update(req: AuthRequest, res: Response) {
   try {
-    const { userId, cardId } = req.params;
+    const userId = req.userId;
+    const { cardId } = req.params;
     const { question, answer, difficulty, isReviewed } = req.body;
 
-    const flashcard = await Flashcard.findById(cardId);
+    if (!cardId || !Types.ObjectId.isValid(cardId)) {
+      res.status(400).json({ error: "Invalid card ID" });
+      return;
+    }
+
+    const flashcard = await Flashcard.findById(cardId as string);
     if (!flashcard) {
       res.status(404).json({ error: "FLASHCARD_NOT_FOUND" });
       return;
@@ -114,7 +156,7 @@ async function update(req: Request, res: Response) {
     }
 
     const updatedFlashcard = await Flashcard.findByIdAndUpdate(
-      cardId,
+      cardId as string,
       updateData,
       {
         new: true,
@@ -132,11 +174,17 @@ async function update(req: Request, res: Response) {
   }
 }
 
-async function destroy(req: Request, res: Response) {
+async function destroy(req: AuthRequest, res: Response) {
   try {
-    const { userId, cardId } = req.params;
+    const userId = req.userId;
+    const { cardId } = req.params;
 
-    const flashcard = await Flashcard.findById(cardId);
+    if (!cardId || !Types.ObjectId.isValid(cardId)) {
+      res.status(400).json({ error: "Invalid card ID" });
+      return;
+    }
+
+    const flashcard = await Flashcard.findById(cardId as string);
     if (!flashcard) {
       res.status(404).json({ error: "FLASHCARD_NOT_FOUND" });
       return;
@@ -147,7 +195,7 @@ async function destroy(req: Request, res: Response) {
       return;
     }
 
-    await Flashcard.findByIdAndDelete(cardId);
+    await Flashcard.findByIdAndDelete(cardId as string);
 
     res.json({ message: "Flashcard deleted successfully" });
   } catch (error: any) {
@@ -157,10 +205,4 @@ async function destroy(req: Request, res: Response) {
   }
 }
 
-module.exports = {
-  index,
-  show,
-  store,
-  update,
-  destroy,
-};
+export { index, show, store, update, destroy };

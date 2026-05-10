@@ -1,16 +1,29 @@
 import type { Request, Response } from "express";
-const User = require("../models/userModel");
-
-export type User = {
-  name: string;
-  email: string;
-  password: string;
-};
+import { Types } from "mongoose";
+import User from "../models/userModel.js";
+import {
+  getPaginationOptions,
+  createPaginatedResponse,
+} from "../utils/pagination.js";
+import { validateUpdateUser, validateEmail } from "../utils/validators.js";
 
 async function index(req: Request, res: Response) {
   try {
-    const users = await User.find();
-    res.json(users);
+    const { page, limit } = getPaginationOptions(req.query);
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      User.find().skip(skip).limit(limit),
+      User.countDocuments(),
+    ]);
+
+    const paginatedResponse = createPaginatedResponse(
+      users,
+      total,
+      page,
+      limit,
+    );
+    res.json(paginatedResponse);
   } catch (error: any) {
     res.status(500).json({ error: error.message || "Failed to fetch users" });
   }
@@ -18,43 +31,50 @@ async function index(req: Request, res: Response) {
 
 async function show(req: Request, res: Response) {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    const user = await User.findById(req.params.id as string);
+    if (!user) {
+      res.status(404).json({ error: "USER_NOT_FOUND" });
+      return;
+    }
     res.json(user);
   } catch (error: any) {
     res.status(500).json({ error: error.message || "Failed to fetch user" });
   }
 }
 
-async function store(req: Request, res: Response) {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "Name, email, and password are required" });
-      return;
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      res.status(409).json({ error: "Email already in use" });
-      return;
-    }
-
-    const user = new User({ name, email, password });
-    await user.save();
-
-    res.status(201).json({ message: "User created successfully", user });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || "Failed to create user" });
-  }
-}
-
 async function update(req: Request, res: Response) {
   try {
-    const { name, email, password } = req.body;
-    const updateData: any = {};
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
 
+    const { name, email, password } = req.body;
+    const validation = validateUpdateUser({ name, email, password });
+
+    if (!validation.isValid) {
+      res.status(400).json({ errors: validation.errors });
+      return;
+    }
+
+    // Check if email is already in use (if updating email)
+    if (email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: req.params.id },
+      });
+      if (existingUser) {
+        res.status(409).json({ error: "Email already in use" });
+        return;
+      }
+    }
+
+    const updateData: any = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (password) updateData.password = password;
@@ -64,9 +84,13 @@ async function update(req: Request, res: Response) {
       return;
     }
 
-    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-    });
+    const user = await User.findByIdAndUpdate(
+      req.params.id as string,
+      updateData,
+      {
+        new: true,
+      },
+    );
 
     if (!user) {
       res.status(404).json({ error: "USER_NOT_FOUND" });
@@ -81,7 +105,12 @@ async function update(req: Request, res: Response) {
 
 async function destroy(req: Request, res: Response) {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id as string);
     if (!user) {
       res.status(404).json({ error: "USER_NOT_FOUND" });
       return;
@@ -92,10 +121,4 @@ async function destroy(req: Request, res: Response) {
   }
 }
 
-module.exports = {
-  index,
-  show,
-  store,
-  update,
-  destroy,
-};
+export { index, show, update, destroy };

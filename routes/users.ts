@@ -1,16 +1,12 @@
-import express from "express";
-const userController = require("../controllers/userController");
+import { Router } from "express";
+import { index, show, update, destroy } from "../controllers/userController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
 
-router.get("/", userController.index);
+router.get("/", index);
+router.get("/:id", show);
+router.put("/:id", authMiddleware, update);
+router.delete("/:id", authMiddleware, destroy);
 
-router.post("/", userController.store);
-
-router.get("/:id", userController.show);
-
-router.put("/:id", userController.update);
-
-router.delete("/:id", userController.destroy);
-
-module.exports = router;
+export default router;

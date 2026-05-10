@@ -1,16 +1,19 @@
 import { Router } from "express";
-const flashcardController = require("../controllers/flashcardController");
+import {
+  index,
+  show,
+  store,
+  update,
+  destroy,
+} from "../controllers/flashcardController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.get("/:userId/flashcards", flashcardController.index);
-
-router.post("/:userId/flashcards", flashcardController.store);
-
-router.get("/:userId/flashcards/:cardId", flashcardController.show);
-
-router.put("/:userId/flashcards/:cardId", flashcardController.update);
-
-router.delete("/:userId/flashcards/:cardId", flashcardController.destroy);
+router.get("/", authMiddleware, index);
+router.post("/", authMiddleware, store);
+router.get("/:cardId", authMiddleware, show);
+router.put("/:cardId", authMiddleware, update);
+router.delete("/:cardId", authMiddleware, destroy);
 
 export default router;
