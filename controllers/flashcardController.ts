@@ -57,4 +57,16 @@ async function find(req: Request, res: Response) {
   }
 }
 
-module.exports = { index, create, destroy, find };
+async function update(req: Request, res: Response) {
+  const id = req.params;
+  try {
+    const flashcard = await Flashcard.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+    res.send(flashcard);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+}
+
+module.exports = { index, create, destroy, find, update };

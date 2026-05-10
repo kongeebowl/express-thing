@@ -11,7 +11,6 @@ declare global {
   namespace Express {
     interface Request {
       currentUser?: UserPayload;
-      session?: any; // we dont talk about this 
     }
   }
 }
@@ -30,7 +29,7 @@ export const currentUser = (
     ) as UserPayload;
     req.currentUser = payload;
   } catch (err) {
-    req.session = null;
+    (req as any).session = null;
     res.status(401).json({ message: "you are invalid" });
     return;
   }

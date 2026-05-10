@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const { Schema } = mongoose;
-const bcrypt = require("bcrypt");
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
+import bcrypt from "bcrypt";
 
 const schemaDefinition = {
   name: { type: String, required: true, trim: true },
@@ -20,17 +20,13 @@ const userSchema = new Schema(schemaDefinition, {
   },
 });
 
-userSchema.pre("save", async function (this: any, next: any) {
-  if (!this.isModified("password")) {
-    return next();
-  }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+userSchema.pre("save", async function (next: any) {
+  if (!this.isModified("password")) return next();
+
+  const hashed = await bcrypt.hash(this.password, 10);
+  this.password = hashed;
+
+  next();
 });
 
 userSchema.methods.comparePassword = async function (
