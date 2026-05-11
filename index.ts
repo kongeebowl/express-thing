@@ -8,11 +8,10 @@ const port = process.env.PORT || 3000;
 
 app.use(currentUser);
 
-const flashcardsRoutes = require("./routes/flashcards");
+const flashcardsRoutes = await import("./routes/flashcards.js");
 app.use("/flashcards", flashcardsRoutes);
-// const authRoutes = require("./routes/auth");
-// app.use("/auth", authRoutes);
-const userRoutes = require("./routes/users");
+
+const userRoutes = await import("./routes/users.js");
 app.use("/users", userRoutes);
 
 mongoose.connect(process.env.MONGO_URI ?? "").catch((err) => {
@@ -20,7 +19,9 @@ mongoose.connect(process.env.MONGO_URI ?? "").catch((err) => {
 });
 
 mongoose.connection.once("open", async () => {
-  console.log("the mongoose is loose");
+  console.log(
+    "I HATE THERSE STUPID ESM AND CJS AWEOPIHAOIWEHAOIEWHOAIWEHOIAWEHIO",
+  );
   app.listen(port, () => {
     console.log(`App is listening at http://localhost:${port}`);
   });

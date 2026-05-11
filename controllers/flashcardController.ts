@@ -69,4 +69,4 @@ async function update(req: Request, res: Response) {
   }
 }
 
-module.exports = { index, create, destroy, find, update };
+export { index, create, destroy, find, update };

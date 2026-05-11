@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 function verifyToken(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -16,4 +16,4 @@ function verifyToken(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-module.exports = verifyToken;
+export { verifyToken };

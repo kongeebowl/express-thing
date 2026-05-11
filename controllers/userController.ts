@@ -23,4 +23,4 @@ async function destroy(req: Request, res: Response) {
   res.sendStatus(204);
 }
 
-module.exports = { index, show, destroy };
+export { index, show, destroy };

@@ -1,7 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = new express.Router();
-const flashcardController = require("../controllers/flashcardController");
-const auth = require("../middleware/auth");
+const flashcardController =
+  await import("../controllers/flashcardController.js");
+const auth = await import("../middleware/auth.js");
 
 router.get("/", auth, flashcardController.index);
 router.get("/:id", auth, flashcardController.find);

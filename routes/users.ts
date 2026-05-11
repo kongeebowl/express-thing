@@ -1,11 +1,10 @@
-const express = require("express");
+import express from "express";
 const router = new express.Router();
-const userController = require("../controllers/userController");
-const auth = require("../middleware/auth");
-const upload = require("../middleware/upload");
+const userController = await import("../controllers/userController.js");
+const auth = await import("../middleware/auth.js");
 
 router.get("/", auth, userController.index);
 router.get("/:id", auth, userController.show);
 router.delete("/:id", auth, userController.destroy);
 
-module.exports = router;
+export { router };

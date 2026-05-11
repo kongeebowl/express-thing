@@ -50,4 +50,4 @@ async function logout(req: Request, res: Response) {
   res.sendStatus(204);
 }
 
-module.exports = { signUp, signIn, logout };
+export { signUp, signIn, logout };
