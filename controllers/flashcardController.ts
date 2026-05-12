@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { Flashcard } from "../models/flashcard.js";
+import { Flashcard } from "../models/flashcard";
 
 async function index(req: Request, res: Response) {
   try {
@@ -69,4 +69,4 @@ async function update(req: Request, res: Response) {
   }
 }
 
-export { index, create, destroy, find, update };
+module.exports = { index, create, destroy, find, update };

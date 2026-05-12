@@ -1,11 +1,12 @@
 import express from "express";
-const router = new express.Router();
-const flashcardController =
-  await import("../controllers/flashcardController.js");
-const auth = await import("../middleware/auth.js");
+const router = express.Router();
+const flashcardController = require("../controllers/flashcardController");
+import { verifyToken } from "../middleware/auth";
 
-router.get("/", auth, flashcardController.index);
-router.get("/:id", auth, flashcardController.find);
-router.put("/:id", auth, flashcardController.update);
-router.post("/", auth, flashcardController.create);
-router.delete("/:id", auth, flashcardController.destroy);
+router.get("/", verifyToken, flashcardController.index);
+router.get("/:id", verifyToken, flashcardController.find);
+router.put("/:id", verifyToken, flashcardController.update);
+router.post("/", verifyToken, flashcardController.create);
+router.delete("/:id", verifyToken, flashcardController.destroy);
+
+module.exports = router;

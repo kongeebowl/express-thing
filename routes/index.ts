@@ -1,10 +1,10 @@
 import express from "express";
-const router = new express.Router();
-const auth = await import("../middleware/auth.js");
-const userRoutes = await import("./users.js");
-const flashcardRoutes = await import("./flashcards.js");
+const router = express.Router();
+import { verifyToken } from "../middleware/auth";
+const userRoutes = require("./users");
+const flashcardRoutes = require("./flashcards");
 
 router.use("/users", userRoutes);
-router.use("/flashcards", auth, flashcardRoutes);
+router.use("/flashcards", verifyToken, flashcardRoutes);
 
-export { router };
+module.exports = router;

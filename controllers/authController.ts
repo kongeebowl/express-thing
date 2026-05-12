@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import User from "../models/user.js";
+import { User } from "../models/user";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
@@ -50,4 +50,4 @@ async function logout(req: Request, res: Response) {
   res.sendStatus(204);
 }
 
-export { signUp, signIn, logout };
+module.exports = { signUp, signIn, logout };

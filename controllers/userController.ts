@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import User from "../models/user.js";
+import { User } from "../models/user";
 
 async function index(req: Request, res: Response) {
   const users = await User.find();
@@ -23,4 +23,4 @@ async function destroy(req: Request, res: Response) {
   res.sendStatus(204);
 }
 
-export { index, show, destroy };
+module.exports = { index, show, destroy };

@@ -1,18 +1,15 @@
 import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
-import { currentUser } from "./middleware/currentUser.js";
+import { currentUser } from "./middleware/currentUser";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(currentUser);
 
-const flashcardsRoutes = await import("./routes/flashcards.js");
-app.use("/flashcards", flashcardsRoutes);
-
-const userRoutes = await import("./routes/users.js");
-app.use("/users", userRoutes);
+const Routes = require("./routes");
+app.use(`/`, Routes);
 
 mongoose.connect(process.env.MONGO_URI ?? "").catch((err) => {
   console.error("kaboom!", err);

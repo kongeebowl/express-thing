@@ -1,10 +1,10 @@
 import express from "express";
-const router = new express.Router();
-const userController = await import("../controllers/userController.js");
-const auth = await import("../middleware/auth.js");
+const router = express.Router();
+const userController = require("../controllers/userController");
+import { verifyToken } from "../middleware/auth";
 
-router.get("/", auth, userController.index);
-router.get("/:id", auth, userController.show);
-router.delete("/:id", auth, userController.destroy);
+router.get("/", verifyToken, userController.index);
+router.get("/:id", verifyToken, userController.show);
+router.delete("/:id", verifyToken, userController.destroy);
 
-export { router };
+module.exports = router;
