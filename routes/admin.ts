@@ -1,24 +1,24 @@
 import express from "express";
 const router = express.Router();
 import jwt from "jsonwebtoken";
-const User = require("../models/user");
-const Flashcard = require("../models/flashcard");
+import { User } from "../models/user";
+import { Flashcard } from "../models/flashcard";
 
-const adminAuthWithCookie = (req: any, res: any, next: any) => {
-  const token =
-    req.cookies.adminToken || req.headers.authorization?.split(" ")[1] || null;
+// const adminAuthWithCookie = (req: any, res: any, next: any) => {
+//   const token =
+//     req.cookies.adminToken || req.headers.authorization?.split(" ")[1] || null;
 
-  if (!token) {
-    return res.redirect("/admin/login");
-  }
+//   if (!token) {
+//     return res.redirect("/admin/login");
+//   }
 
-  try {
-    req.user = jwt.verify(token, process.env.JWT_KEY!);
-    next();
-  } catch {
-    return res.redirect("/admin/login");
-  }
-};
+//   try {
+//     req.user = jwt.verify(token, process.env.JWT_KEY!);
+//     next();
+//   } catch {
+//     return res.redirect("/admin/login");
+//   }
+// };
 
 /**
  * @swagger
@@ -32,9 +32,9 @@ const adminAuthWithCookie = (req: any, res: any, next: any) => {
  *       200:
  *         description: Login page rendered successfully
  */
-router.get("/login", (req: any, res: any) => {
-  res.render("admin/login", { errors: [] });
-});
+// router.get("/login", (req: any, res: any) => {
+//   res.render("admin/login", { errors: [] });
+// });
 
 /**
  * @swagger
@@ -64,53 +64,53 @@ router.get("/login", (req: any, res: any) => {
  *       400:
  *         description: Invalid credentials or validation error
  */
-router.post("/login", async (req: any, res: any) => {
-  const { email, password } = req.body;
-  const errors: any[] = [];
+// router.post("/login", async (req: any, res: any) => {
+//   const { email, password } = req.body;
+//   const errors: any[] = [];
 
-  if (!email) {
-    errors.push({ field: "email", message: "Email is required" });
-  }
-  if (!password) {
-    errors.push({ field: "password", message: "Password is required" });
-  }
+//   if (!email) {
+//     errors.push({ field: "email", message: "Email is required" });
+//   }
+//   if (!password) {
+//     errors.push({ field: "password", message: "Password is required" });
+//   }
 
-  if (errors.length > 0) {
-    return res.render("admin/login", { errors });
-  }
+//   if (errors.length > 0) {
+//     return res.render("admin/login", { errors });
+//   }
 
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      errors.push({ message: "Invalid email or password" });
-      return res.render("admin/login", { errors });
-    }
+//   try {
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       errors.push({ message: "Invalid email or password" });
+//       return res.render("admin/login", { errors });
+//     }
 
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      errors.push({ message: "Invalid email or password" });
-      return res.render("admin/login", { errors });
-    }
+//     const isPasswordValid = await user.comparePassword(password);
+//     if (!isPasswordValid) {
+//       errors.push({ message: "Invalid email or password" });
+//       return res.render("admin/login", { errors });
+//     }
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name },
-      process.env.JWT_KEY!,
-      { expiresIn: "6h" },
-    );
+//     const token = jwt.sign(
+//       { id: user._id, email: user.email, name: user.name },
+//       process.env.JWT_KEY!,
+//       { expiresIn: "6h" },
+//     );
 
-    res.cookie("adminToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 6 * 60 * 60 * 1000,
-    });
+//     // res.cookie("adminToken", token, {
+//     //   httpOnly: true,
+//     //   secure: process.env.NODE_ENV === "production",
+//     //   sameSite: "strict",
+//     //   maxAge: 6 * 60 * 60 * 1000,
+//     // });
 
-    res.redirect("/admin");
-  } catch (error: any) {
-    errors.push({ message: "An error occurred during login" });
-    res.render("admin/login", { errors });
-  }
-});
+//     res.redirect("/admin");
+//   } catch (error: any) {
+//     errors.push({ message: "An error occurred during login" });
+//     res.render("admin/login", { errors });
+//   }
+// });
 
 /**
  * @swagger
@@ -124,10 +124,10 @@ router.post("/login", async (req: any, res: any) => {
  *       302:
  *         description: Redirect to admin login page
  */
-router.post("/logout", (req: any, res: any) => {
-  res.clearCookie("adminToken");
-  res.redirect("/admin/login");
-});
+// router.post("/logout", (req: any, res: any) => {
+//   res.clearCookie("adminToken");
+//   res.redirect("/admin/login");
+// });
 
 /**
  * @swagger
@@ -145,10 +145,10 @@ router.post("/logout", (req: any, res: any) => {
  *       500:
  *         description: Server error
  */
-router.get("/", adminAuthWithCookie, async (req: any, res: any) => {
+router.get("/", async (req: any, res: any) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalFlashcards = await Flashcard.countDocuments();
+    const totalUsers = (await User.find()).length;
+    const totalFlashcards = (await Flashcard.find()).length;
 
     res.render("admin/dashboard", {
       totalUsers,
@@ -176,7 +176,7 @@ router.get("/", adminAuthWithCookie, async (req: any, res: any) => {
  *       500:
  *         description: Server error
  */
-router.get("/users", adminAuthWithCookie, async (req: any, res: any) => {
+router.get("/users", async (req: any, res: any) => {
   try {
     const users = await User.find().select("-password");
     res.render("admin/users", { users, currentUser: req.user });
@@ -208,19 +208,15 @@ router.get("/users", adminAuthWithCookie, async (req: any, res: any) => {
  *       500:
  *         description: Server error
  */
-router.post(
-  "/users/:id/delete",
-  adminAuthWithCookie,
-  async (req: any, res: any) => {
-    try {
-      const { id } = req.params;
-      await User.findByIdAndDelete(id);
-      res.redirect("/admin/users");
-    } catch (error: any) {
-      res.status(500).render("error", { message: error.message });
-    }
-  },
-);
+router.post("/users/:id/delete", async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    await User.findByIdAndDelete(id);
+    res.redirect("/admin/users");
+  } catch (error: any) {
+    res.status(500).render("error", { message: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -238,7 +234,7 @@ router.post(
  *       500:
  *         description: Server error
  */
-router.get("/flashcards", adminAuthWithCookie, async (req: any, res: any) => {
+router.get("/flashcards", async (req: any, res: any) => {
   try {
     const flashcards = await Flashcard.find().populate("userId", "name email");
     res.render("admin/flashcards", { flashcards, currentUser: req.user });
@@ -270,18 +266,14 @@ router.get("/flashcards", adminAuthWithCookie, async (req: any, res: any) => {
  *       500:
  *         description: Server error
  */
-router.post(
-  "/flashcards/:id/delete",
-  adminAuthWithCookie,
-  async (req: any, res: any) => {
-    try {
-      const { id } = req.params;
-      await Flashcard.findByIdAndDelete(id);
-      res.redirect("/admin/flashcards");
-    } catch (error: any) {
-      res.status(500).render("error", { message: error.message });
-    }
-  },
-);
+router.post("/flashcards/:id/delete", async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    await Flashcard.findByIdAndDelete(id);
+    res.redirect("/admin/flashcards");
+  } catch (error: any) {
+    res.status(500).render("error", { message: error.message });
+  }
+});
 
 module.exports = router;
