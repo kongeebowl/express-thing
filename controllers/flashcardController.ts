@@ -10,7 +10,7 @@ import { Flashcard } from "../models/flashcard";
 async function index(req: Request, res: Response) {
   try {
     const flashcards = await Flashcard.find({
-      userId: req.currentUser!.id,
+      userId: (req as any).currentUser!.id,
     }).populate("userId");
     res.status(200).send(flashcards);
   } catch (err) {
@@ -29,7 +29,7 @@ async function create(req: Request, res: Response) {
     const flashcard = await Flashcard.create({
       question: "question",
       answer: "answer",
-      userId: req.currentUser!.id,
+      userId: (req as any).currentUser!.id,
     });
     flashcard.save();
     res.status(201).send(flashcard);
@@ -51,7 +51,7 @@ async function destroy(req: Request, res: Response) {
       return res.status(404).send({ error: "Flashcard not found" });
     }
 
-    if (flashcard.userId !== req.currentUser!.id)
+    if (flashcard.userId !== (req as any).currentUser!.id)
       res.status(403).send({ error: "you are wrong sir man" });
 
     await flashcard.deleteOne();
@@ -74,7 +74,7 @@ async function find(req: Request, res: Response) {
 
     if (!flashcard)
       return res.status(404).json({ error: "flashcard not found" });
-    if (flashcard.userId !== req.currentUser!.id)
+    if (flashcard.userId !== (req as any).currentUser!.id)
       return res.status(403).json({ error: "you are wrong person man sir" });
   } catch (error) {
     return res.status(400).json({ error: "something very very bad happened" });
