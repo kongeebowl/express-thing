@@ -1,10 +1,28 @@
-const mongoose = require("mongoose");
-const { Schema } = mongoose;
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
+
+/**
+ * @swagger
+ * definitions:
+ *   Flashcard:
+ *     type: object
+ *     properties:
+ *       id:
+ *         type: string
+ *       userId:
+ *         type: string
+ *       question:
+ *         type: string
+ *       answer:
+ *         type: string
+ *       imageUrl:
+ *         type: string
+ */
 
 const flashcardSchema = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
     },
@@ -18,20 +36,15 @@ const flashcardSchema = new Schema(
       required: true,
       trim: true,
     },
-    difficulty: {
+    imageUrl: {
       type: String,
-      enum: ["easy", "medium", "hard"],
-      default: "medium",
-    },
-    isReviewed: {
-      type: Boolean,
-      default: false,
+      required: false,
     },
   },
   {
     timestamps: true,
     toJSON: {
-      transform(ret: any) {
+      transform(doc, ret: any) {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v;

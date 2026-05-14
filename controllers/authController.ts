@@ -1,81 +1,72 @@
 import type { Request, Response } from "express";
+import { User } from "../models/user";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import User from "../models/userModel.js";
 
-const isValidEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
+/**
+ * Registers a new user account
+ * @param {Request} req - Express request object with name, email, password in body
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} 200 on success or error status
+ */
+async function signUp(req: Request, res: Response) {
+  const { name, email, password } = req.body;
 
-async function register(req: Request, res: Response) {
+  if (await User.findOne({ email }))
+    return res.status(409).json({ error: "dawg u already in here" });
+
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "Name, email, and password are required" });
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      res.status(400).json({ error: "Invalid email format" });
-      return;
-    }
-
-    if (password.length < 6) {
-      res.status(400).json({ error: "Password must be at least 6 characters" });
-      return;
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      res.status(409).json({ error: "Email already in use" });
-      return;
-    }
-
-    const user = new User({ name, email, password });
-    await user.save();
-
-    res.status(201).json({ message: "User registered successfully", user });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || "Registration failed" });
-  }
-}
-
-async function login(req: Request, res: Response) {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
-      return;
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      res.status(401).json({ error: "Invalid email or password" });
-      return;
-    }
-
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      res.status(401).json({ error: "Invalid email or password" });
-      return;
-    }
-
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      res.status(500).json({ error: "Server configuration error" });
-      return;
-    }
-
-    const token = jwt.sign({ userId: user._id, email: user.email }, secret, {
-      expiresIn: "7d",
+    const newUser = await User.create({
+      name,
+      email,
+      password,
     });
+    await newUser.save();
 
-    res.json({ message: "Login successful", token, user });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || "Login failed" });
+    return res.sendStatus(200);
+  } catch {
+    return res.status(500).json({ error: "uh oh spaghettio" });
   }
 }
 
-export { register, login };
+/**
+ * Authenticates a user and returns a JWT token
+ * @param {Request} req - Express request object with email and password in body
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} User data with JWT token or 401 error
+ */
+async function signIn(req: Request, res: Response) {
+  const { email, password } = req.body;
+  const existingUser = await User.findOne({ email });
+
+  if (!existingUser)
+    return res.status(401).json({ error: "wrong credentials" });
+
+  if (!(await bcrypt.compare(password, existingUser.password)))
+    return res.status(401).json({ error: "wrong credentials" });
+
+  const payload = {
+    id: existingUser.id,
+    name: existingUser.name,
+    email: existingUser.email,
+  };
+
+  const userJWT = jwt.sign(payload, process.env.JWT_KEY!, { expiresIn: "6h" });
+
+  res.status(200).send({
+    ...existingUser.toJSON(),
+    token: userJWT,
+  });
+}
+
+/**
+ * Logs out the current user (clears session)
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} 204 No Content
+ */
+async function logout(req: Request, res: Response) {
+  res.sendStatus(204);
+}
+
+module.exports = { signUp, signIn, logout };
