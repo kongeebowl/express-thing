@@ -10,7 +10,7 @@ import { Flashcard } from "../models/flashcard";
 async function index(req: Request, res: Response) {
   try {
     const flashcards = await Flashcard.find({
-      userId: (req as any).currentUser!.id,
+      userId: (req as any).currentUser.id,
     }).populate("userId");
     res.status(200).send(flashcards);
   } catch (err) {
@@ -27,9 +27,9 @@ async function index(req: Request, res: Response) {
 async function create(req: Request, res: Response) {
   try {
     const flashcard = await Flashcard.create({
-      question: "question",
-      answer: "answer",
-      userId: (req as any).currentUser!.id,
+      question: req.body.question,
+      answer: req.body.answer,
+      userId: req.currentUser!.id,
     });
     flashcard.save();
     res.status(201).send(flashcard);
@@ -51,7 +51,7 @@ async function destroy(req: Request, res: Response) {
       return res.status(404).send({ error: "Flashcard not found" });
     }
 
-    if (flashcard.userId !== (req as any).currentUser!.id)
+    if (flashcard.userId !== req.currentUser!.id)
       res.status(403).send({ error: "you are wrong sir man" });
 
     await flashcard.deleteOne();

@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 interface UserPayload {
   id: string;
   email: string;
-  role: string;
 }
 
 declare global {
@@ -33,14 +32,13 @@ export const currentUser = (
 
   try {
     const payload = jwt.verify(
-      req.headers.authorization,
+      req.headers.authorization.replace("Bearer ", ""),
       process.env.JWT_KEY!,
     ) as UserPayload;
+
     req.currentUser = payload;
   } catch (err) {
-    (req as any).session = null;
-    res.status(401).json({ message: "you are invalid" });
-    return;
+    console.log(err);
   }
 
   next();

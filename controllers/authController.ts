@@ -46,6 +46,7 @@ async function signIn(req: Request, res: Response) {
     return res.status(401).json({ error: "wrong credentials" });
 
   const payload = {
+    id: existingUser.id,
     name: existingUser.name,
     email: existingUser.email,
   };
