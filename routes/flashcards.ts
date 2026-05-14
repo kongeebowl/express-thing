@@ -1,11 +1,11 @@
 import express from "express";
 const router = express.Router();
+
 const flashcardController = require("../controllers/flashcardController");
+
 import { verifyToken } from "../middleware/auth";
-const streamifier = require("streamifier");
-import { cloudinary } from "../config/cloudinary";
 import { upload } from "../middleware/multer";
-import { Flashcard } from "../models/flashcard";
+
 import {
   validateCreateFlashcard,
   validateUpdateFlashcard,
@@ -63,6 +63,8 @@ router.get("/", verifyToken, flashcardController.index);
  *         description: Unauthorized - you do not own this flashcard
  *       404:
  *         description: Flashcard not found
+ *       500:
+ *         description: Failed to retrieve flashcard
  */
 router.get("/:id", verifyToken, flashcardController.find);
 
@@ -71,7 +73,7 @@ router.get("/:id", verifyToken, flashcardController.find);
  * /flashcards/{id}:
  *   put:
  *     summary: Update a flashcard
- *     description: Updates a flashcard by ID with new question/answer (must be owned by the user). Question and answer must be 1-1000 characters.
+ *     description: Updates a flashcard by ID with new question and answer values
  *     tags:
  *       - Flashcards
  *     security:
@@ -92,12 +94,17 @@ router.get("/:id", verifyToken, flashcardController.find);
  *             properties:
  *               question:
  *                 type: string
- *                 description: The question (1-1000 characters)
+ *                 minLength: 1
+ *                 maxLength: 1000
  *               answer:
  *                 type: string
- *                 description: The answer (1-1000 characters)
+ *                 minLength: 1
+ *                 maxLength: 1000
  *               imageUrl:
  *                 type: string
+ *             required:
+ *               - question
+ *               - answer
  *     responses:
  *       200:
  *         description: Flashcard updated successfully
@@ -106,7 +113,11 @@ router.get("/:id", verifyToken, flashcardController.find);
  *             schema:
  *               $ref: '#/components/schemas/Flashcard'
  *       400:
- *         description: Validation error - invalid field lengths or no fields provided
+ *         description: Validation error or invalid update data
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Flashcard not found
  *       500:
  *         description: Failed to update flashcard
  */
@@ -121,8 +132,8 @@ router.put(
  * @swagger
  * /flashcards:
  *   post:
- *     summary: Create a new flashcard (with optional image upload)
- *     description: Creates a flashcard for the authenticated user. Supports optional image upload (JPEG, PNG, GIF, WebP up to 5MB).
+ *     summary: Create a new flashcard
+ *     description: Creates a new flashcard for the authenticated user with an optional image upload
  *     tags:
  *       - Flashcards
  *     security:
@@ -133,20 +144,24 @@ router.put(
  *         multipart/form-data:
  *           schema:
  *             type: object
- *             properties:
- *               question:
- *                 type: string
- *                 description: The question (1-1000 characters)
- *               answer:
- *                 type: string
- *                 description: The answer (1-1000 characters)
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: Optional image file (JPEG, PNG, GIF, WebP, max 5MB)
  *             required:
  *               - question
  *               - answer
+ *             properties:
+ *               question:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 1000
+ *                 description: Flashcard question
+ *               answer:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 1000
+ *                 description: Flashcard answer
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Optional image upload
  *     responses:
  *       201:
  *         description: Flashcard created successfully
@@ -155,9 +170,9 @@ router.put(
  *             schema:
  *               $ref: '#/components/schemas/Flashcard'
  *       400:
- *         description: Validation error - missing or invalid fields or invalid file upload
+ *         description: Invalid request data or image upload failed
  *       401:
- *         description: Unauthorized - user not authenticated
+ *         description: Unauthorized
  *       500:
  *         description: Failed to create flashcard
  */
@@ -174,7 +189,7 @@ router.post(
  * /flashcards/{id}:
  *   delete:
  *     summary: Delete a flashcard
- *     description: Deletes a flashcard by ID (must be owned by the user)
+ *     description: Deletes a flashcard owned by the authenticated user
  *     tags:
  *       - Flashcards
  *     security:
@@ -187,13 +202,13 @@ router.post(
  *           type: string
  *         description: The flashcard ID
  *     responses:
- *       201:
+ *       204:
  *         description: Flashcard deleted successfully
  *       403:
  *         description: Unauthorized - you do not own this flashcard
  *       404:
  *         description: Flashcard not found
- *       400:
+ *       500:
  *         description: Failed to delete flashcard
  */
 router.delete("/:id", verifyToken, flashcardController.destroy);
