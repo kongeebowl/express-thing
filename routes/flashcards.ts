@@ -2,6 +2,10 @@ import express from "express";
 const router = express.Router();
 const flashcardController = require("../controllers/flashcardController");
 import { verifyToken } from "../middleware/auth";
+const streamifier = require("streamifier");
+import { cloudinary } from "../config/cloudinary";
+import { upload } from "../middleware/multer";
+import { Flashcard } from "../models/flashcard";
 import {
   validateCreateFlashcard,
   validateUpdateFlashcard,
@@ -117,8 +121,8 @@ router.put(
  * @swagger
  * /flashcards:
  *   post:
- *     summary: Create a new flashcard
- *     description: Creates a new flashcard for the authenticated user. Question and answer must be 1-1000 characters.
+ *     summary: Create a new flashcard (with optional image upload)
+ *     description: Creates a flashcard for the authenticated user. Supports optional image upload (JPEG, PNG, GIF, WebP up to 5MB).
  *     tags:
  *       - Flashcards
  *     security:
@@ -126,7 +130,7 @@ router.put(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -136,6 +140,10 @@ router.put(
  *               answer:
  *                 type: string
  *                 description: The answer (1-1000 characters)
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Optional image file (JPEG, PNG, GIF, WebP, max 5MB)
  *             required:
  *               - question
  *               - answer
@@ -147,13 +155,16 @@ router.put(
  *             schema:
  *               $ref: '#/components/schemas/Flashcard'
  *       400:
- *         description: Validation error - missing or invalid fields
+ *         description: Validation error - missing or invalid fields or invalid file upload
+ *       401:
+ *         description: Unauthorized - user not authenticated
  *       500:
  *         description: Failed to create flashcard
  */
 router.post(
   "/",
   verifyToken,
+  upload.single("file"),
   validateCreateFlashcard,
   flashcardController.create,
 );

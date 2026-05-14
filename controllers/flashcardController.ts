@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+const streamifier = require("streamifier");
+import { cloudinary } from "../config/cloudinary";
 import { Flashcard } from "../models/flashcard";
 
 /**
@@ -24,17 +26,52 @@ async function index(req: Request, res: Response) {
  * @param {Response} res - Express response object
  * @returns {Promise<void>} Created flashcard or error message
  */
-async function create(req: Request, res: Response) {
+async function create(req: any, res: any) {
   try {
+    const userId = (req as any).currentUser?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    let imageUrl: string | null = null;
+
+    if (req.file) {
+      const uploadResult = await new Promise<{ secure_url: string }>(
+        (resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { resource_type: "auto" },
+            (error, result) => {
+              if (error || !result) {
+                return reject(error);
+              }
+
+              resolve(result as { secure_url: string });
+            },
+          );
+
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
+        },
+      );
+
+      imageUrl = uploadResult.secure_url;
+    }
+
     const flashcard = await Flashcard.create({
       question: req.body.question,
       answer: req.body.answer,
-      userId: req.currentUser!.id,
+      userId: userId,
+      imageUrl,
     });
-    flashcard.save();
-    res.status(201).send(flashcard);
+
+    return res.status(201).json(flashcard);
   } catch (err) {
-    res.status(400).send({ error: "Failed to create flashcard" });
+    console.log(err);
+    return res.status(400).json({
+      error: "Failed to create flashcard",
+    });
   }
 }
 
@@ -51,7 +88,7 @@ async function destroy(req: Request, res: Response) {
       return res.status(404).send({ error: "Flashcard not found" });
     }
 
-    if (flashcard.userId !== req.currentUser!.id)
+    if (flashcard.userId !== (req as any).currentUser!.id)
       res.status(403).send({ error: "you are wrong sir man" });
 
     await flashcard.deleteOne();
