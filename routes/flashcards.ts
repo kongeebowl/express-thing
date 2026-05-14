@@ -2,6 +2,10 @@ import express from "express";
 const router = express.Router();
 const flashcardController = require("../controllers/flashcardController");
 import { verifyToken } from "../middleware/auth";
+import {
+  validateCreateFlashcard,
+  validateUpdateFlashcard,
+} from "../middleware/validation";
 
 /**
  * @swagger
@@ -63,7 +67,7 @@ router.get("/:id", verifyToken, flashcardController.find);
  * /flashcards/{id}:
  *   put:
  *     summary: Update a flashcard
- *     description: Updates a flashcard by ID with new question/answer (must be owned by the user)
+ *     description: Updates a flashcard by ID with new question/answer (must be owned by the user). Question and answer must be 1-1000 characters.
  *     tags:
  *       - Flashcards
  *     security:
@@ -84,8 +88,10 @@ router.get("/:id", verifyToken, flashcardController.find);
  *             properties:
  *               question:
  *                 type: string
+ *                 description: The question (1-1000 characters)
  *               answer:
  *                 type: string
+ *                 description: The answer (1-1000 characters)
  *               imageUrl:
  *                 type: string
  *     responses:
@@ -95,17 +101,24 @@ router.get("/:id", verifyToken, flashcardController.find);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Flashcard'
+ *       400:
+ *         description: Validation error - invalid field lengths or no fields provided
  *       500:
  *         description: Failed to update flashcard
  */
-router.put("/:id", verifyToken, flashcardController.update);
+router.put(
+  "/:id",
+  verifyToken,
+  validateUpdateFlashcard,
+  flashcardController.update,
+);
 
 /**
  * @swagger
  * /flashcards:
  *   post:
  *     summary: Create a new flashcard
- *     description: Creates a new flashcard for the authenticated user
+ *     description: Creates a new flashcard for the authenticated user. Question and answer must be 1-1000 characters.
  *     tags:
  *       - Flashcards
  *     security:
@@ -119,8 +132,10 @@ router.put("/:id", verifyToken, flashcardController.update);
  *             properties:
  *               question:
  *                 type: string
+ *                 description: The question (1-1000 characters)
  *               answer:
  *                 type: string
+ *                 description: The answer (1-1000 characters)
  *             required:
  *               - question
  *               - answer
@@ -132,9 +147,16 @@ router.put("/:id", verifyToken, flashcardController.update);
  *             schema:
  *               $ref: '#/components/schemas/Flashcard'
  *       400:
+ *         description: Validation error - missing or invalid fields
+ *       500:
  *         description: Failed to create flashcard
  */
-router.post("/", verifyToken, flashcardController.create);
+router.post(
+  "/",
+  verifyToken,
+  validateCreateFlashcard,
+  flashcardController.create,
+);
 
 /**
  * @swagger

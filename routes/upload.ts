@@ -6,6 +6,7 @@ import { upload } from "../middleware/multer";
 const Flashcard = require("../models/flashcard");
 import type { Request, Response } from "express";
 import { currentUser } from "../middleware/currentUser";
+import { validateFileUpload } from "../middleware/validation";
 
 interface MulterRequest extends Request {
   file?: any; // we dont talk about this
@@ -16,7 +17,7 @@ interface MulterRequest extends Request {
  * /upload:
  *   post:
  *     summary: Upload an image to a flashcard
- *     description: Uploads an image file to Cloudinary and associates it with a flashcard. The file is stored in memory and streamed to Cloudinary.
+ *     description: Uploads an image file to Cloudinary and associates it with a flashcard. Supports JPEG, PNG, GIF, WebP up to 5MB.
  *     tags:
  *       - Upload
  *     security:
@@ -31,7 +32,7 @@ interface MulterRequest extends Request {
  *               file:
  *                 type: string
  *                 format: binary
- *                 description: The image file to upload
+ *                 description: Image file (JPEG, PNG, GIF, WebP, max 5MB)
  *               flashcardId:
  *                 type: string
  *                 description: The ID of the flashcard to associate with the image
@@ -51,7 +52,7 @@ interface MulterRequest extends Request {
  *                 flashcard:
  *                   $ref: '#/components/schemas/Flashcard'
  *       400:
- *         description: Bad request - missing file, flashcardId, or upload failed
+ *         description: Validation error - invalid file type, size too large, or missing flashcardId
  *       401:
  *         description: Unauthorized - user not authenticated
  *       403:
@@ -65,6 +66,7 @@ router.post(
   "/",
   currentUser,
   upload.single("file"),
+  validateFileUpload,
   async (req: MulterRequest, res: Response) => {
     try {
       const { flashcardId } = req.body;
@@ -72,14 +74,6 @@ router.post(
 
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      if (!flashcardId) {
-        return res.status(400).json({ message: "Flashcard ID is required" });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ message: "File is required" });
       }
 
       const flashcard = await Flashcard.findById(flashcardId);

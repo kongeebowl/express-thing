@@ -50,13 +50,11 @@ const userSchema = new Schema(schemaDefinition, {
  * Pre-save hook to hash password before storing
  * Only hashes if password has been modified
  */
-userSchema.pre("save", async function (next: any) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function (this: any) {
+  if (!this.isModified("password")) return;
 
   const hashed = await bcrypt.hash(this.password, 10);
   this.password = hashed;
-
-  next();
 });
 
 /**

@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 const authController = require("../controllers/authController");
+import { validateSignup, validateSignin } from "../middleware/validation";
 
 /**
  * @swagger
@@ -19,7 +20,7 @@ const authController = require("../controllers/authController");
  *             properties:
  *               name:
  *                 type: string
- *                 description: User's full name
+ *                 description: User's full name (2-100 characters)
  *               email:
  *                 type: string
  *                 format: email
@@ -27,7 +28,7 @@ const authController = require("../controllers/authController");
  *               password:
  *                 type: string
  *                 format: password
- *                 description: User's password
+ *                 description: User's password (minimum 6 characters)
  *             required:
  *               - name
  *               - email
@@ -35,12 +36,14 @@ const authController = require("../controllers/authController");
  *     responses:
  *       200:
  *         description: User registered successfully
+ *       400:
+ *         description: Validation error - missing or invalid fields
  *       409:
  *         description: Conflict - user with this email already exists
  *       500:
  *         description: Server error during signup
  */
-router.post("/signup", authController.signUp);
+router.post("/signup", validateSignup, authController.signUp);
 
 /**
  * @swagger
@@ -85,12 +88,14 @@ router.post("/signup", authController.signUp);
  *                 token:
  *                   type: string
  *                   description: JWT token for authentication
+ *       400:
+ *         description: Validation error - missing or invalid fields
  *       401:
  *         description: Unauthorized - invalid credentials
  *       500:
  *         description: Server error during signin
  */
-router.post("/signin", authController.signIn);
+router.post("/signin", validateSignin, authController.signIn);
 
 /**
  * @swagger
