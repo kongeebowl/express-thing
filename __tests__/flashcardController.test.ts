@@ -135,7 +135,6 @@ describe("Flashcard Controller", () => {
 
       await flashcardController.find(req as Request, res as Response);
 
-      // The original function doesn't return anything, just verify it doesn't error
       expect(Flashcard.findById).toHaveBeenCalledWith({ id: "1" });
     });
 

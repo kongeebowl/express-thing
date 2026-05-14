@@ -33,7 +33,7 @@ export const validateSignup = (
   next: NextFunction,
 ) => {
   const errors: ValidationError[] = [];
-  const { name, email, password } = req.body;
+  const { name, email, password } = req.body || {};
 
   if (!name) {
     errors.push({ field: "name", message: "Name is required" });
@@ -69,7 +69,7 @@ export const validateSignin = (
   next: NextFunction,
 ) => {
   const errors: ValidationError[] = [];
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
 
   if (!email) {
     errors.push({ field: "email", message: "Email is required" });
@@ -94,7 +94,7 @@ export const validateCreateFlashcard = (
   next: NextFunction,
 ) => {
   const errors: ValidationError[] = [];
-  const { question, answer } = req.body;
+  const { question, answer } = req.body || {};
 
   if (!question) {
     errors.push({ field: "question", message: "Question is required" });
@@ -127,9 +127,8 @@ export const validateUpdateFlashcard = (
   next: NextFunction,
 ) => {
   const errors: ValidationError[] = [];
-  const { question, answer } = req.body;
+  const { question, answer } = req.body || {};
 
-  // At least one field must be provided for update
   if (!question && !answer) {
     errors.push({
       field: "body",

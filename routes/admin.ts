@@ -1,15 +1,133 @@
 import express from "express";
 const router = express.Router();
-import { verifyToken } from "../middleware/auth";
+import jwt from "jsonwebtoken";
 const User = require("../models/user");
 const Flashcard = require("../models/flashcard");
 
-const adminAuth = (req: any, res: any, next: any) => {
-  if (!req.user) {
-    return res.status(401).redirect("/auth/signin");
+const adminAuthWithCookie = (req: any, res: any, next: any) => {
+  const token =
+    req.cookies.adminToken || req.headers.authorization?.split(" ")[1] || null;
+
+  if (!token) {
+    return res.redirect("/admin/login");
   }
-  next();
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_KEY!);
+    next();
+  } catch {
+    return res.redirect("/admin/login");
+  }
 };
+
+/**
+ * @swagger
+ * /admin/login:
+ *   get:
+ *     summary: Admin login page
+ *     description: Display the admin login form
+ *     tags:
+ *       - Admin
+ *     responses:
+ *       200:
+ *         description: Login page rendered successfully
+ */
+router.get("/login", (req: any, res: any) => {
+  res.render("admin/login", { errors: [] });
+});
+
+/**
+ * @swagger
+ * /admin/login:
+ *   post:
+ *     summary: Admin login
+ *     description: Authenticate admin user with email and password
+ *     tags:
+ *       - Admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *             required:
+ *               - email
+ *               - password
+ *     responses:
+ *       302:
+ *         description: Redirect to admin dashboard on success
+ *       400:
+ *         description: Invalid credentials or validation error
+ */
+router.post("/login", async (req: any, res: any) => {
+  const { email, password } = req.body;
+  const errors: any[] = [];
+
+  if (!email) {
+    errors.push({ field: "email", message: "Email is required" });
+  }
+  if (!password) {
+    errors.push({ field: "password", message: "Password is required" });
+  }
+
+  if (errors.length > 0) {
+    return res.render("admin/login", { errors });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      errors.push({ message: "Invalid email or password" });
+      return res.render("admin/login", { errors });
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      errors.push({ message: "Invalid email or password" });
+      return res.render("admin/login", { errors });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, name: user.name },
+      process.env.JWT_KEY!,
+      { expiresIn: "6h" },
+    );
+
+    res.cookie("adminToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 6 * 60 * 60 * 1000,
+    });
+
+    res.redirect("/admin");
+  } catch (error: any) {
+    errors.push({ message: "An error occurred during login" });
+    res.render("admin/login", { errors });
+  }
+});
+
+/**
+ * @swagger
+ * /admin/logout:
+ *   post:
+ *     summary: Admin logout
+ *     description: Clear admin authentication and redirect to login
+ *     tags:
+ *       - Admin
+ *     responses:
+ *       302:
+ *         description: Redirect to admin login page
+ */
+router.post("/logout", (req: any, res: any) => {
+  res.clearCookie("adminToken");
+  res.redirect("/admin/login");
+});
 
 /**
  * @swagger
@@ -19,17 +137,15 @@ const adminAuth = (req: any, res: any, next: any) => {
  *     description: View system statistics and admin controls
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Dashboard rendered successfully
- *       401:
- *         description: Unauthorized - authentication required
+ *       302:
+ *         description: Redirect to login if not authenticated
  *       500:
  *         description: Server error
  */
-router.get("/", verifyToken, adminAuth, async (req: any, res: any) => {
+router.get("/", adminAuthWithCookie, async (req: any, res: any) => {
   try {
     const totalUsers = await User.countDocuments();
     const totalFlashcards = await Flashcard.countDocuments();
@@ -52,17 +168,15 @@ router.get("/", verifyToken, adminAuth, async (req: any, res: any) => {
  *     description: Retrieve a list of all users in the system
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User list rendered successfully
- *       401:
- *         description: Unauthorized - authentication required
+ *       302:
+ *         description: Redirect to login if not authenticated
  *       500:
  *         description: Server error
  */
-router.get("/users", verifyToken, adminAuth, async (req: any, res: any) => {
+router.get("/users", adminAuthWithCookie, async (req: any, res: any) => {
   try {
     const users = await User.find().select("-password");
     res.render("admin/users", { users, currentUser: req.user });
@@ -79,8 +193,6 @@ router.get("/users", verifyToken, adminAuth, async (req: any, res: any) => {
  *     description: Delete a user account from the system
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -98,8 +210,7 @@ router.get("/users", verifyToken, adminAuth, async (req: any, res: any) => {
  */
 router.post(
   "/users/:id/delete",
-  verifyToken,
-  adminAuth,
+  adminAuthWithCookie,
   async (req: any, res: any) => {
     try {
       const { id } = req.params;
@@ -119,32 +230,22 @@ router.post(
  *     description: Retrieve a list of all flashcards in the system with owner information
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Flashcard list rendered successfully
- *       401:
- *         description: Unauthorized - authentication required
+ *       302:
+ *         description: Redirect to login if not authenticated
  *       500:
  *         description: Server error
  */
-router.get(
-  "/flashcards",
-  verifyToken,
-  adminAuth,
-  async (req: any, res: any) => {
-    try {
-      const flashcards = await Flashcard.find().populate(
-        "userId",
-        "name email",
-      );
-      res.render("admin/flashcards", { flashcards, currentUser: req.user });
-    } catch (error: any) {
-      res.status(500).render("error", { message: error.message });
-    }
-  },
-);
+router.get("/flashcards", adminAuthWithCookie, async (req: any, res: any) => {
+  try {
+    const flashcards = await Flashcard.find().populate("userId", "name email");
+    res.render("admin/flashcards", { flashcards, currentUser: req.user });
+  } catch (error: any) {
+    res.status(500).render("error", { message: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -154,8 +255,6 @@ router.get(
  *     description: Delete a flashcard from the system
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -173,8 +272,7 @@ router.get(
  */
 router.post(
   "/flashcards/:id/delete",
-  verifyToken,
-  adminAuth,
+  adminAuthWithCookie,
   async (req: any, res: any) => {
     try {
       const { id } = req.params;
