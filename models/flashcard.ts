@@ -1,6 +1,29 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
+/**
+ * @swagger
+ * definitions:
+ *   Flashcard:
+ *     type: object
+ *     properties:
+ *       id:
+ *         type: string
+ *       userId:
+ *         type: string
+ *       question:
+ *         type: string
+ *       answer:
+ *         type: string
+ *       imageUrl:
+ *         type: string
+ */
+
+/**
+ * Flashcard Schema
+ * Represents a study flashcard with question, answer, and optional image
+ * Each flashcard is owned by a user and timestamped
+ */
 const flashcardSchema = new Schema(
   {
     userId: {
@@ -17,6 +40,10 @@ const flashcardSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    imageUrl: {
+      type: String,
+      required: false,
     },
     // difficulty: {
     //   type: String,

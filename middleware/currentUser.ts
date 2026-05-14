@@ -15,6 +15,15 @@ declare global {
   }
 }
 
+/**
+ * Middleware to extract and attach current user from JWT token
+ * Attempts to verify JWT from Authorization header
+ * Sets currentUser on request if token is valid
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {void}
+ */
 export const currentUser = (
   req: Request,
   res: Response,

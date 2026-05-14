@@ -1,6 +1,12 @@
 import type { Request, Response } from "express";
 import { Flashcard } from "../models/flashcard";
 
+/**
+ * Retrieves all flashcards for the authenticated user
+ * @param {Request} req - Express request object with currentUser
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} JSON array of flashcards or error message
+ */
 async function index(req: Request, res: Response) {
   try {
     const flashcards = await Flashcard.find({
@@ -12,6 +18,12 @@ async function index(req: Request, res: Response) {
   }
 }
 
+/**
+ * Creates a new flashcard for the authenticated user
+ * @param {Request} req - Express request object with currentUser
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} Created flashcard or error message
+ */
 async function create(req: Request, res: Response) {
   try {
     const flashcard = await Flashcard.create({
@@ -26,6 +38,12 @@ async function create(req: Request, res: Response) {
   }
 }
 
+/**
+ * Deletes a flashcard by ID (must be owned by user)
+ * @param {Request} req - Express request object with flashcard ID and currentUser
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} Success or error message
+ */
 async function destroy(req: Request, res: Response) {
   try {
     const flashcard = await Flashcard.findById(req.params.id);
@@ -43,6 +61,12 @@ async function destroy(req: Request, res: Response) {
   }
 }
 
+/**
+ * Retrieves a single flashcard by ID (must be owned by user)
+ * @param {Request} req - Express request object with flashcard ID and currentUser
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} Flashcard data or error message
+ */
 async function find(req: Request, res: Response) {
   try {
     const id = req.params;
@@ -57,6 +81,12 @@ async function find(req: Request, res: Response) {
   }
 }
 
+/**
+ * Updates a flashcard by ID with new data
+ * @param {Request} req - Express request object with flashcard ID and update data
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} Updated flashcard or error message
+ */
 async function update(req: Request, res: Response) {
   const id = req.params;
   try {

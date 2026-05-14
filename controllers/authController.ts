@@ -3,6 +3,12 @@ import { User } from "../models/user";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
+/**
+ * Registers a new user account
+ * @param {Request} req - Express request object with name, email, password in body
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} 200 on success or error status
+ */
 async function signUp(req: Request, res: Response) {
   const { name, email, password } = req.body;
 
@@ -23,6 +29,12 @@ async function signUp(req: Request, res: Response) {
   }
 }
 
+/**
+ * Authenticates a user and returns a JWT token
+ * @param {Request} req - Express request object with email and password in body
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} User data with JWT token or 401 error
+ */
 async function signIn(req: Request, res: Response) {
   const { email, password } = req.body;
   const existingUser = await User.findOne({ email });
@@ -46,6 +58,12 @@ async function signIn(req: Request, res: Response) {
   });
 }
 
+/**
+ * Logs out the current user (clears session)
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} 204 No Content
+ */
 async function logout(req: Request, res: Response) {
   res.sendStatus(204);
 }

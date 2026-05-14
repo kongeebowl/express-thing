@@ -2,6 +2,32 @@ import mongoose from "mongoose";
 import { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
+/**
+ * @swagger
+ * definitions:
+ *   User:
+ *     type: object
+ *     properties:
+ *       id:
+ *         type: string
+ *       name:
+ *         type: string
+ *       email:
+ *         type: string
+ *         format: email
+ *       createdAt:
+ *         type: string
+ *         format: date-time
+ *       updatedAt:
+ *         type: string
+ *         format: date-time
+ */
+
+/**
+ * User Schema
+ * Represents a user account with email, name, and hashed password
+ * Passwords are automatically hashed on save
+ */
 const schemaDefinition = {
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, unique: true },
@@ -20,6 +46,10 @@ const userSchema = new Schema(schemaDefinition, {
   },
 });
 
+/**
+ * Pre-save hook to hash password before storing
+ * Only hashes if password has been modified
+ */
 userSchema.pre("save", async function (next: any) {
   if (!this.isModified("password")) return next();
 
@@ -29,6 +59,11 @@ userSchema.pre("save", async function (next: any) {
   next();
 });
 
+/**
+ * Compare provided password with stored hashed password
+ * @param {string} candidatePassword - The password to verify
+ * @returns {Promise<boolean>} True if passwords match, false otherwise
+ */
 userSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ) {
