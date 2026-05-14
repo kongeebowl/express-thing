@@ -1,57 +1,32 @@
 import type { Request, Response, NextFunction } from "express";
 
-/**
- * Validation error response
- */
 interface ValidationError {
   field: string;
   message: string;
 }
 
-/**
- * Multer Request with file property
- */
 interface MulterRequest extends Request {
   file?: any;
 }
 
-/**
- * Email validation regex
- */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * Validate email format
- */
 export const validateEmail = (email: string): boolean => {
   return EMAIL_REGEX.test(email) && email.length <= 255;
 };
 
-/**
- * Validate password strength
- * Minimum 6 characters
- */
 export const validatePassword = (password: string): boolean => {
   return !!(password && password.length >= 6);
 };
 
-/**
- * Validate name field
- */
 export const validateName = (name: string): boolean => {
   return !!(name && name.trim().length >= 2 && name.length <= 100);
 };
 
-/**
- * Validate flashcard question/answer
- */
 export const validateFlashcardText = (text: string): boolean => {
   return !!(text && text.trim().length >= 1 && text.length <= 1000);
 };
 
-/**
- * Signup validation middleware
- */
 export const validateSignup = (
   req: Request,
   res: Response,
@@ -88,9 +63,6 @@ export const validateSignup = (
   next();
 };
 
-/**
- * Signin validation middleware
- */
 export const validateSignin = (
   req: Request,
   res: Response,
@@ -116,9 +88,6 @@ export const validateSignin = (
   next();
 };
 
-/**
- * Create flashcard validation middleware
- */
 export const validateCreateFlashcard = (
   req: Request,
   res: Response,
@@ -152,9 +121,6 @@ export const validateCreateFlashcard = (
   next();
 };
 
-/**
- * Update flashcard validation middleware
- */
 export const validateUpdateFlashcard = (
   req: Request,
   res: Response,
@@ -192,9 +158,6 @@ export const validateUpdateFlashcard = (
   next();
 };
 
-/**
- * File upload validation middleware
- */
 export const validateFileUpload = (
   req: MulterRequest,
   res: Response,
@@ -205,7 +168,6 @@ export const validateFileUpload = (
   if (!req.file) {
     errors.push({ field: "file", message: "File is required" });
   } else {
-    // Check file size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
     if (req.file.size > maxSize) {
       errors.push({
@@ -214,7 +176,6 @@ export const validateFileUpload = (
       });
     }
 
-    // Check file type (images only)
     const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedMimes.includes(req.file.mimetype)) {
       errors.push({

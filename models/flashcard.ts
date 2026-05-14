@@ -19,11 +19,6 @@ import { Schema } from "mongoose";
  *         type: string
  */
 
-/**
- * Flashcard Schema
- * Represents a study flashcard with question, answer, and optional image
- * Each flashcard is owned by a user and timestamped
- */
 const flashcardSchema = new Schema(
   {
     userId: {
@@ -45,15 +40,6 @@ const flashcardSchema = new Schema(
       type: String,
       required: false,
     },
-    // difficulty: {
-    //   type: String,
-    //   enum: ["easy", "medium", "hard"],
-    //   default: "medium",
-    // },
-    // isReviewed: {
-    //   type: Boolean,
-    //   default: false,
-    // },
   },
   {
     timestamps: true,

@@ -23,11 +23,6 @@ import bcrypt from "bcrypt";
  *         format: date-time
  */
 
-/**
- * User Schema
- * Represents a user account with email, name, and hashed password
- * Passwords are automatically hashed on save
- */
 const schemaDefinition = {
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, unique: true },

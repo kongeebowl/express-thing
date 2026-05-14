@@ -91,6 +91,11 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
+// Configure EJS templating engine
+app.set("view engine", "ejs");
+app.set("views", "./views");
+app.use(express.static("public"));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -105,9 +110,7 @@ mongoose.connect(process.env.MONGO_URI ?? "").catch((err) => {
 });
 
 mongoose.connection.once("open", async () => {
-  console.log(
-    "I HATE THERSE STUPID ESM AND CJS AWEOPIHAOIWEHAOIEWHOAIWEHOIAWEHIO",
-  );
+  console.log("i am one with the mongo");
   app.listen(port, () => {
     console.log(`App is listening at http://localhost:${port}`);
     console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
